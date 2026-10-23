@@ -1,0 +1,68 @@
+User: how do I handle exceptions in python
+Assistant: Wrap risky operations in a try-except block to catch errors gracefully:
+```python
+def safe_divide(a, b):
+    try:
+        return a / b
+    except ZeroDivisionError:
+        return None
+```
+<|endoftext|>
+User: create a simple class in python
+Assistant: Here is a clean class with an initializer and method:
+```python
+class Counter:
+    def __init__(self, start=0):
+        self.value = start
+
+    def increment(self, step=1):
+        self.value += step
+        return self.value
+```
+<|endoftext|>
+User: how do I parse json in python
+Assistant: Use the built-in json module to serialize and parse data:
+```python
+import json
+
+data = json.loads('{"status": "ok", "count": 3}')
+print(data["status"])
+```
+<|endoftext|>
+User: how to use numpy arrays for math
+Assistant: NumPy provides fast vectorized operations over arrays:
+```python
+import numpy as np
+
+arr = np.array([1.0, 2.0, 3.0, 4.0])
+normalized = (arr - arr.mean()) / (arr.std() + 1e-8)
+print(normalized)
+```
+<|endoftext|>
+User: how to make a simple pytorch layer
+Assistant: You can build a neural network module by subclassing torch.nn.Module:
+```python
+import torch
+import torch.nn as nn
+
+class LinearBlock(nn.Module):
+    def __init__(self, in_features, out_features):
+        super().__init__()
+        self.fc = nn.Linear(in_features, out_features)
+        self.act = nn.ReLU()
+
+    def forward(self, x):
+        return self.act(self.fc(x))
+```
+<|endoftext|>
+User: how do I measure execution time of a function
+Assistant: Use time.perf_counter to measure elapsed time accurately:
+```python
+import time
+
+start = time.perf_counter()
+total = sum(range(100000))
+elapsed = time.perf_counter() - start
+print(f"Done in {elapsed:.4f}s")
+```
+<|endoftext|>

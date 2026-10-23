@@ -1,0 +1,50 @@
+{
+  "task_verbs": ["write", "create", "build", "implement", "show me", "give me"],
+  "concepts": [
+    {
+      "topic": "sum a list of numbers",
+      "explanation": "You can compute the total of all elements in a sequence cleanly:",
+      "code": "def sum_elements(items):\n    total = 0\n    for x in items:\n        total += x\n    return total"
+    },
+    {
+      "topic": "calculate the average of a list",
+      "explanation": "Divide the sum of elements by the length while guarding against empty input:",
+      "code": "def average(items):\n    if not items:\n        return 0.0\n    return sum(items) / len(items)"
+    },
+    {
+      "topic": "remove duplicates from a list while preserving order",
+      "explanation": "Track seen items in a set as you iterate through the sequence:",
+      "code": "def unique_ordered(items):\n    seen = set()\n    result = []\n    for x in items:\n        if x not in seen:\n            seen.add(x)\n            result.append(x)\n    return result"
+    },
+    {
+      "topic": "check if a string is a palindrome",
+      "explanation": "Normalize the string and compare it with its reversed slice:",
+      "code": "def is_palindrome(text):\n    cleaned = ''.join(c.lower() for c in text if c.isalnum())\n    return cleaned == cleaned[::-1]"
+    },
+    {
+      "topic": "merge two dictionaries",
+      "explanation": "Use the dictionary union operator or unpacking to combine mappings:",
+      "code": "def merge_dicts(first, second):\n    return {**first, **second}"
+    },
+    {
+      "topic": "clamp a number between a minimum and maximum",
+      "explanation": "Use min and max together to bound a value within a range:",
+      "code": "def clamp(value, low, high):\n    return max(low, min(value, high))"
+    },
+    {
+      "topic": "chunk a list into fixed size batches",
+      "explanation": "Step through the list by the batch size using range:",
+      "code": "def chunk_list(items, batch_size):\n    return [items[i:i + batch_size] for i in range(0, len(items), batch_size)]"
+    },
+    {
+      "topic": "compute dot product with numpy",
+      "explanation": "Use np.dot or the @ operator for fast vector multiplication:",
+      "code": "import numpy as np\n\ndef dot_product(a, b):\n    return float(np.dot(np.asarray(a), np.asarray(b)))"
+    }
+  ],
+  "followups": [
+    "Let me know if you want to customize the input types or add error handling!",
+    "You can call this function directly in your script or import it as a helper.",
+    "This runs in linear time and handles edge cases cleanly."
+  ]
+}

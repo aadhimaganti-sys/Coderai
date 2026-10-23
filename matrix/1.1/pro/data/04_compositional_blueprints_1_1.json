@@ -1,0 +1,30 @@
+{
+  "architectural_prefixes": [
+    "design and implement",
+    "architect a modular Python implementation to",
+    "build a high-throughput production module to",
+    "write a clean, extensible solution to"
+  ],
+  "modules": [
+    {
+      "goal": "build a bloom filter for fast probabilistic set membership",
+      "rationale": "A Bloom filter uses multiple independent hash projections over a compact bit array for space-efficient membership queries:",
+      "code": "import hashlib\n\nclass BloomFilter:\n    def __init__(self, size: int = 1024, num_hashes: int = 3):\n        self.size = size\n        self.num_hashes = num_hashes\n        self.bits = bytearray(size)\n\n    def _hashes(self, item: str):\n        for seed in range(self.num_hashes):\n            digest = hashlib.sha256(f'{seed}:{item}'.encode()).hexdigest()\n            yield int(digest, 16) % self.size\n\n    def add(self, item: str) -> None:\n        for pos in self._hashes(item):\n            self.bits[pos] = 1\n\n    def might_contain(self, item: str) -> bool:\n        return all(self.bits[pos] == 1 for pos in self._hashes(item))"
+    },
+    {
+      "goal": "compute LoRA low-rank adaptation linear layer in PyTorch",
+      "rationale": "Low-Rank Adaptation freezes the base projection and trains a compact rank-r decomposition A and B:",
+      "code": "import math\nimport torch\nimport torch.nn as nn\n\nclass LoRALinear(nn.Module):\n    def __init__(self, in_dim: int, out_dim: int, rank: int = 4, alpha: float = 8.0):\n        super().__init__()\n        self.base = nn.Linear(in_dim, out_dim, bias=False)\n        self.base.weight.requires_grad_(False)\n        self.lora_a = nn.Parameter(torch.randn(in_dim, rank) / math.sqrt(in_dim))\n        self.lora_b = nn.Parameter(torch.zeros(rank, out_dim))\n        self.scale = alpha / rank\n\n    def forward(self, x: torch.Tensor) -> torch.Tensor:\n        return self.base(x) + (x @ self.lora_a @ self.lora_b) * self.scale"
+    },
+    {
+      "goal": "implement a priority task scheduler with deadlines",
+      "rationale": "A min-heap keyed by deadline timestamp dispatches the most urgent task in O(log n) time:",
+      "code": "import heapq\n\nclass DeadlineScheduler:\n    def __init__(self):\n        self._queue = []\n        self._seq = 0\n\n    def schedule(self, deadline: float, task_fn) -> None:\n        self._seq += 1\n        heapq.heappush(self._queue, (deadline, self._seq, task_fn))\n\n    def pop_next(self):\n        if not self._queue:\n            return None\n        deadline, _, task_fn = heapq.heappop(self._queue)\n        return deadline, task_fn"
+    }
+  ],
+  "engineering_notes": [
+    "This Gen 1.1 architecture scales cleanly across CPU and GPU workloads.",
+    "You can compose this class with async workers or PyTorch training pipelines.",
+    "Invariants and memory bounds are enforced explicitly."
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "openers": [
+    "That is a great question!",
+    "I love thinking about that!",
+    "Here is a fun way to look at it:",
+    "Let us explore that together:"
+  ],
+  "topics": [
+    {
+      "prompt": "tell me about creativity",
+      "core": "Creativity happens when you connect two familiar ideas in a surprising new way and give yourself room to experiment."
+    },
+    {
+      "prompt": "tell me about space exploration",
+      "core": "Exploring space reminds us how vast the universe is while teaching us to build resilient technologies for life on Earth."
+    },
+    {
+      "prompt": "how can I build good habits",
+      "core": "Start with a habit so small it takes less than two minutes, anchor it to your existing routine, and celebrate consistency."
+    },
+    {
+      "prompt": "what makes a great story",
+      "core": "A compelling story pairs a character who cares deeply about a goal with unexpected obstacles that reveal who they truly are."
+    },
+    {
+      "prompt": "why is curiosity important",
+      "core": "Curiosity turns everyday challenges into puzzles to explore and keeps your mind adaptable and excited to learn."
+    },
+    {
+      "prompt": "how do I relax after a busy day",
+      "core": "Stepping away from bright screens, listening to calm music, and reflecting on three things that went well helps your mind unwind."
+    }
+  ],
+  "closers": [
+    "What part of that sounds most interesting to you?",
+    "Would you like to dive deeper into that idea or try another angle?",
+    "I would love to hear what you think about it!"
+  ]
+}

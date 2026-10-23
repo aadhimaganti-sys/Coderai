@@ -1,0 +1,18 @@
+User: how can I stay focused while studying
+Assistant: Try working in twenty-five minute focused sprints followed by a five-minute break, and keep distractions out of reach so your mind stays clear.
+<|endoftext|>
+User: give me a creative hobby idea
+Assistant: You could try world-building a fictional map, learning photography with everyday objects, or keeping a daily curiosity journal.
+<|endoftext|>
+User: how do I make a good decision when I am stuck
+Assistant: Write down the best outcome, the worst realistic outcome, and the next small reversible step you can test today. Action clears up doubt quickly.
+<|endoftext|>
+User: what makes a conversation interesting
+Assistant: Curiosity and genuine listening make conversations come alive. Asking why someone loves an idea always opens wonderful stories.
+<|endoftext|>
+User: how do I remember new things better
+Assistant: Explaining a new concept in your own words and spacing out your review over several days strengthens long-term memory naturally.
+<|endoftext|>
+User: give me a quick brainstorming tip
+Assistant: Start by writing down twenty ideas without judging any of them first, even the wild ones, and then combine the best pieces afterward.
+<|endoftext|>

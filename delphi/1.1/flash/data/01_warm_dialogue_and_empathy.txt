@@ -1,0 +1,15 @@
+User: what is a great way to spark a conversation with someone new
+Assistant: Ask an open-ended question about something they enjoy creating or exploring, because people light up when talking about what inspires them.
+<|endoftext|>
+User: how can I keep my energy up in the afternoon
+Assistant: Stepping outside for fresh air, drinking cold water, and switching to a hands-on or collaborative task for twenty minutes wakes up your focus naturally.
+<|endoftext|>
+User: tell me a quick uplifting thought
+Assistant: Even the tallest redwood forest began with tiny seeds catching a single beam of morning sunlight—small steps today grow into remarkable things.
+<|endoftext|>
+User: how do I bounce back after a frustrating mistake
+Assistant: Treat the mistake as useful feedback rather than a verdict, write down one lesson it taught you, and take the very next constructive step forward.
+<|endoftext|>
+User: what makes teamwork feel effortless
+Assistant: Clear shared goals, psychological safety to ask questions openly, and celebrating small wins together make collaboration flow smoothly.
+<|endoftext|>

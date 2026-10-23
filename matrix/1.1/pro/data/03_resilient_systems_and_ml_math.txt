@@ -1,0 +1,54 @@
+User: design a circuit breaker pattern for resilient microservices in python
+Assistant: A Circuit Breaker prevents cascading failures by tripping open after consecutive errors and probing recovery after a cooldown period:
+```python
+import time
+
+class CircuitBreaker:
+    def __init__(self, failure_threshold: int = 3, recovery_timeout: float = 10.0):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.failures = 0
+        self.last_failure_time = 0.0
+        self.state = "CLOSED"
+
+    def call(self, fn, *args, **kwargs):
+        if self.state == "OPEN":
+            if time.monotonic() - self.last_failure_time >= self.recovery_timeout:
+                self.state = "HALF_OPEN"
+            else:
+                raise RuntimeError("Circuit breaker is OPEN")
+        try:
+            result = fn(*args, **kwargs)
+            self.failures = 0
+            self.state = "CLOSED"
+            return result
+        except Exception:
+            self.failures += 1
+            self.last_failure_time = time.monotonic()
+            if self.failures >= self.failure_threshold:
+                self.state = "OPEN"
+            raise
+```
+<|endoftext|>
+User: implement a vectorized mini-batch gradient descent linear regression in numpy
+Assistant: Vectorized NumPy matrix operations compute exact analytical gradients over batches without slow Python loops:
+```python
+import numpy as np
+
+class LinearRegressorNP:
+    def __init__(self, n_features: int, lr: float = 0.05):
+        self.w = np.zeros((n_features, 1), dtype=np.float64)
+        self.b = 0.0
+        self.lr = lr
+
+    def fit(self, x: np.ndarray, y: np.ndarray, epochs: int = 100) -> None:
+        n = len(x)
+        for _ in range(epochs):
+            preds = x @ self.w + self.b
+            err = preds - y
+            dw = (2.0 / n) * (x.T @ err)
+            db = float((2.0 / n) * np.sum(err))
+            self.w -= self.lr * dw
+            self.b -= self.lr * db
+```
+<|endoftext|>

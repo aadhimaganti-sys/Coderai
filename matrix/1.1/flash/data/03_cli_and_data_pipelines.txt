@@ -1,0 +1,51 @@
+User: write a binary tree level order traversal in python
+Assistant: Use `collections.deque` to perform Breadth-First Search level by level in O(n) time:
+```python
+from collections import deque
+
+def level_order(root):
+    if root is None:
+        return []
+    levels = []
+    queue = deque([root])
+    while queue:
+        level_vals = []
+        for _ in range(len(queue)):
+            node = queue.popleft()
+            level_vals.append(node.val)
+            if getattr(node, "left", None):
+                queue.append(node.left)
+            if getattr(node, "right", None):
+                queue.append(node.right)
+        levels.append(level_vals)
+    return levels
+```
+<|endoftext|>
+User: implement two sum in linear time
+Assistant: Store seen numbers and their indices in a dictionary so each complement check is O(1):
+```python
+def two_sum(nums: list, target: int):
+    seen = {}
+    for idx, value in enumerate(nums):
+        needed = target - value
+        if needed in seen:
+            return (seen[needed], idx)
+        seen[value] = idx
+    return None
+```
+<|endoftext|>
+User: write a function to validate balanced parentheses
+Assistant: Push opening brackets onto a stack and verify that each closing bracket matches the top of the stack:
+```python
+def is_balanced(expr: str) -> bool:
+    pairs = {")": "(", "]": "[", "}": "{"}
+    stack = []
+    for ch in expr:
+        if ch in "([{":
+            stack.append(ch)
+        elif ch in pairs:
+            if not stack or stack.pop() != pairs[ch]:
+                return False
+    return len(stack) == 0
+```
+<|endoftext|>

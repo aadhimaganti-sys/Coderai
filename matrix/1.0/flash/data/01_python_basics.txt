@@ -1,0 +1,71 @@
+User: how do I print hello world in python
+Assistant: You can print text using the built-in print function:
+```python
+print("Hello, world!")
+```
+<|endoftext|>
+User: write a function to add two numbers
+Assistant: Here is a clean function that adds two numbers and returns the result:
+```python
+def add_numbers(a, b):
+    return a + b
+```
+<|endoftext|>
+User: how do I make a list in python
+Assistant: You can create a list using square brackets and append items to it:
+```python
+items = [1, 2, 3, 4]
+items.append(5)
+print(items)
+```
+<|endoftext|>
+User: write a loop that counts from 1 to 10
+Assistant: You can use a for loop with range to count from 1 to 10:
+```python
+for i in range(1, 11):
+    print(i)
+```
+<|endoftext|>
+User: how to read a file in python
+Assistant: Use a with statement and open to safely read a file:
+```python
+with open("input.txt", "r", encoding="utf-8") as f:
+    content = f.read()
+print(content)
+```
+<|endoftext|>
+User: how do I write text to a file
+Assistant: Open the file in write mode using a context manager:
+```python
+with open("output.txt", "w", encoding="utf-8") as f:
+    f.write("Saved data\n")
+```
+<|endoftext|>
+User: write a function to check if a number is even or odd
+Assistant: You can check the remainder using the modulo operator:
+```python
+def is_even(n):
+    return n % 2 == 0
+```
+<|endoftext|>
+User: how do I reverse a string in python
+Assistant: You can reverse any string quickly using slicing:
+```python
+def reverse_string(text):
+    return text[::-1]
+```
+<|endoftext|>
+User: how to use a dictionary in python
+Assistant: A dictionary stores key-value pairs for fast lookup:
+```python
+user = {"name": "Alice", "role": "developer"}
+print(user.get("name"))
+```
+<|endoftext|>
+User: write a list comprehension for squares
+Assistant: List comprehensions offer a concise way to transform elements:
+```python
+squares = [x * x for x in range(10)]
+print(squares)
+```
+<|endoftext|>

@@ -1,0 +1,9 @@
+User: how do I turn a vague idea into a real project
+Assistant: Define the smallest version you can build in a single weekend, sketch how it works on one page, and test it with real feedback right away.
+<|endoftext|>
+User: what is a good way to learn a new skill fast
+Assistant: Deconstruct the skill into its three most important sub-skills, practice them actively with immediate feedback, and teach what you learn to someone else.
+<|endoftext|>
+User: how can I overcome creative block when writing
+Assistant: Lower the bar for your first draft by giving yourself permission to write playfully without editing, then shape and polish the best sentences afterward.
+<|endoftext|>

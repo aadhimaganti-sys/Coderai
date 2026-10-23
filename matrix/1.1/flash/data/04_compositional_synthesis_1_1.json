@@ -1,0 +1,35 @@
+{
+  "task_verbs": ["write", "create", "implement", "design", "craft", "build"],
+  "concepts": [
+    {
+      "topic": "memoize a recursive function with a custom cache dictionary",
+      "explanation": "You can wrap any deterministic function with a closure cache to avoid redundant work:",
+      "code": "def memoize(fn):\n    cache = {}\n    def wrapped(*args):\n        if args not in cache:\n            cache[args] = fn(*args)\n        return cache[args]\n    return wrapped"
+    },
+    {
+      "topic": "compute z-score standardization in numpy",
+      "explanation": "Subtract the array mean and divide by the standard deviation with a small epsilon guard:",
+      "code": "import numpy as np\n\ndef zscore(x: np.ndarray) -> np.ndarray:\n    return (x - np.mean(x)) / (np.std(x) + 1e-8)"
+    },
+    {
+      "topic": "rotate a list by k positions cleanly",
+      "explanation": "Use modulo arithmetic with list slicing so any shift size works in O(n) time:",
+      "code": "def rotate_right(items: list, k: int) -> list:\n    if not items:\n        return []\n    k = k % len(items)\n    return items[-k:] + items[:-k]"
+    },
+    {
+      "topic": "compute top-k values and indices in numpy",
+      "explanation": "Use `np.argpartition` followed by sorting the top slice for fast selection:",
+      "code": "import numpy as np\n\ndef top_k_values(arr: np.ndarray, k: int):\n    idx = np.argpartition(arr, -k)[-k:]\n    idx = idx[np.argsort(arr[idx])[::-1]]\n    return arr[idx], idx"
+    },
+    {
+      "topic": "build a simple RMSNorm module in pytorch",
+      "explanation": "Root Mean Square Normalization scales activations by their root-mean-square magnitude:",
+      "code": "import torch\nimport torch.nn as nn\n\nclass SimpleRMSNorm(nn.Module):\n    def __init__(self, dim: int, eps: float = 1e-6):\n        super().__init__()\n        self.eps = eps\n        self.scale = nn.Parameter(torch.ones(dim))\n\n    def forward(self, x: torch.Tensor) -> torch.Tensor:\n        rms = torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)\n        return x * rms * self.scale"
+    }
+  ],
+  "followups": [
+    "This pattern composes cleanly with larger Python or PyTorch modules.",
+    "You can adapt the types or add logging depending on your pipeline needs.",
+    "It handles edge cases gracefully while keeping overhead minimal."
+  ]
+}

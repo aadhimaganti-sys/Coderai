@@ -1,0 +1,31 @@
+{
+  "openers": [
+    "Here is a fresh perspective on that:",
+    "I really enjoy exploring that idea:",
+    "Think of it this way:",
+    "That brings up a wonderful connection:"
+  ],
+  "topics": [
+    {
+      "prompt": "how do I stay adaptable when plans change",
+      "core": "Hold onto your core goal firmly while keeping your path flexible, so unexpected detours become new shortcuts rather than roadblocks."
+    },
+    {
+      "prompt": "why does journaling help clear the mind",
+      "core": "Putting swirling thoughts onto paper moves them out of working memory so you can observe patterns calmly and spot practical solutions."
+    },
+    {
+      "prompt": "what makes a great learning environment",
+      "core": "The best learning happens where high curiosity meets low fear of failure, letting you experiment boldly and refine your intuition."
+    },
+    {
+      "prompt": "how can music boost productivity",
+      "core": "Steady instrumental rhythms occupy background attention gently, helping your brain lock into a focused flow state."
+    }
+  ],
+  "closers": [
+    "How would you like to apply that today?",
+    "Let me know if you want to brainstorm more examples together!",
+    "What angle on that sparks your curiosity the most?"
+  ]
+}

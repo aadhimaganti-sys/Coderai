@@ -1,0 +1,41 @@
+{
+  "architectural_prefixes": [
+    "design and implement",
+    "architect a production-ready solution to",
+    "write a clean, scalable implementation to",
+    "build a high-performance module to",
+    "create a well-structured Python implementation to"
+  ],
+  "modules": [
+    {
+      "goal": "build a token bucket rate limiter",
+      "rationale": "A token bucket rate limiter controls request throughput smoothly while allowing controlled bursts:",
+      "code": "import time\n\nclass TokenBucket:\n    def __init__(self, rate: float, capacity: float):\n        self.rate = rate\n        self.capacity = capacity\n        self.tokens = capacity\n        self.timestamp = time.monotonic()\n\n    def allow(self, cost: float = 1.0) -> bool:\n        now = time.monotonic()\n        self.tokens = min(self.capacity, self.tokens + (now - self.timestamp) * self.rate)\n        self.timestamp = now\n        if self.tokens >= cost:\n            self.tokens -= cost\n            return True\n        return False"
+    },
+    {
+      "goal": "compute principal component analysis (PCA) using numpy SVD",
+      "rationale": "Singular Value Decomposition (SVD) on mean-centered features yields the top orthogonal principal components cleanly:",
+      "code": "import numpy as np\n\ndef pca_project(x: np.ndarray, n_components: int) -> np.ndarray:\n    centered = x - np.mean(x, axis=0, keepdims=True)\n    _, _, vt = np.linalg.svd(centered, full_matrices=False)\n    components = vt[:n_components].T\n    return centered @ components"
+    },
+    {
+      "goal": "train a custom PyTorch gradient accumulation step",
+      "rationale": "Gradient accumulation simulates larger effective batch sizes on memory-constrained hardware:",
+      "code": "import torch\n\ndef train_accumulated(model, batches, optimizer, criterion, accum_steps=4):\n    optimizer.zero_grad()\n    for step, (x, y) in enumerate(batches, 1):\n        loss = criterion(model(x), y) / accum_steps\n        loss.backward()\n        if step % accum_steps == 0:\n            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)\n            optimizer.step()\n            optimizer.zero_grad()"
+    },
+    {
+      "goal": "implement topological sort with cycle detection",
+      "rationale": "Kahn's in-degree algorithm orders directed acyclic graph dependencies and detects cycles when unvisited nodes remain:",
+      "code": "from collections import deque\n\ndef topological_sort(graph: dict) -> list:\n    in_degree = {u: 0 for u in graph}\n    for u, neighbors in graph.items():\n        for v in neighbors:\n            in_degree[v] = in_degree.get(v, 0) + 1\n    queue = deque([u for u, deg in in_degree.items() if deg == 0])\n    order = []\n    while queue:\n        u = queue.popleft()\n        order.append(u)\n        for v in graph.get(u, []):\n            in_degree[v] -= 1\n            if in_degree[v] == 0:\n                queue.append(v)\n    if len(order) != len(in_degree):\n        raise ValueError('Cycle detected in dependency graph')\n    return order"
+    },
+    {
+      "goal": "implement a SwiGLU feedforward layer in PyTorch",
+      "rationale": "SwiGLU combines a SiLU-gated linear projection with an elementwise value path for stronger Transformer representation capacity:",
+      "code": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\nclass SwiGLU(nn.Module):\n    def __init__(self, dim: int, hidden_dim: int):\n        super().__init__()\n        self.w_gate = nn.Linear(dim, hidden_dim)\n        self.w_val = nn.Linear(dim, hidden_dim)\n        self.w_out = nn.Linear(hidden_dim, dim)\n\n    def forward(self, x: torch.Tensor) -> torch.Tensor:\n        return self.w_out(F.silu(self.w_gate(x)) * self.w_val(x))"
+    }
+  ],
+  "engineering_notes": [
+    "This design keeps time and memory complexity predictable under heavy workloads.",
+    "You can compose this directly with existing PyTorch or NumPy pipelines and unit tests.",
+    "Edge cases and invariants are explicitly guarded to prevent silent runtime failures."
+  ]
+}
