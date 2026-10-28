@@ -1,0 +1,24 @@
+{
+  "architectural_prefixes": [
+    "design and implement",
+    "architect a modular Gen 2.1 Pro MoE Python implementation to",
+    "build a high-throughput Sparse-MoE production module to",
+    "write a clean, extensible Gen 2.1 solution to"
+  ],
+  "modules": [
+    {
+      "goal": "compute Switch Transformer and Router Z-loss for Sparse Mixture-of-Experts",
+      "rationale": "Combining fractional token-dispatch load balancing with router logsumexp z-loss keeps all experts active without numerical overflow:",
+      "code": "import torch\nimport torch.nn.functional as F\n\ndef moe_router_losses(router_logits: torch.Tensor, top_indices: torch.Tensor, n_experts: int) -> torch.Tensor:\n    probs = F.softmax(router_logits, dim=-1)\n    mean_prob = probs.mean(dim=(0, 1))\n    one_hot = F.one_hot(top_indices, num_classes=n_experts).float()\n    frac_routed = one_hot.mean(dim=(0, 1, 2))\n    balance_loss = (mean_prob * frac_routed).sum() * n_experts\n    z_loss = (torch.logsumexp(router_logits, dim=-1) ** 2).mean() * 1e-3\n    return balance_loss + z_loss"
+    },
+    {
+      "goal": "implement grouped query attention GQA with QK-RMSNorm and rotary embeddings",
+      "rationale": "Normalizing query and key heads with RMSNorm before RoPE rotation prevents attention logit spikes in deep 12-layer MoE transformers:",
+      "code": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\nclass QKNormGQA(nn.Module):\n    def __init__(self, d_model: int, n_heads: int = 8, n_kv_heads: int = 2):\n        super().__init__()\n        self.n_heads = n_heads\n        self.n_kv_heads = n_kv_heads\n        self.group_size = n_heads // n_kv_heads\n        self.head_dim = d_model // n_heads\n        self.q_proj = nn.Linear(d_model, n_heads * self.head_dim, bias=False)\n        self.k_proj = nn.Linear(d_model, n_kv_heads * self.head_dim, bias=False)\n        self.v_proj = nn.Linear(d_model, n_kv_heads * self.head_dim, bias=False)\n        self.out_proj = nn.Linear(d_model, d_model, bias=False)\n\n    def forward(self, x: torch.Tensor) -> torch.Tensor:\n        b, t, d = x.size()\n        q = self.q_proj(x).view(b, t, self.n_heads, self.head_dim).transpose(1, 2)\n        k = self.k_proj(x).view(b, t, self.n_kv_heads, self.head_dim).transpose(1, 2)\n        v = self.v_proj(x).view(b, t, self.n_kv_heads, self.head_dim).transpose(1, 2)\n        q = q * torch.rsqrt(q.pow(2).mean(-1, keepdim=True) + 1e-6)\n        k = k * torch.rsqrt(k.pow(2).mean(-1, keepdim=True) + 1e-6)\n        k = k.repeat_interleave(self.group_size, dim=1)\n        v = v.repeat_interleave(self.group_size, dim=1)\n        scores = (q @ k.transpose(-2, -1)) / math.sqrt(self.head_dim)\n        mask = torch.tril(torch.ones(t, t, device=x.device)).view(1, 1, t, t)\n        attn = F.softmax(scores.masked_fill(mask == 0, float('-inf')), dim=-1)\n        return self.out_proj((attn @ v).transpose(1, 2).contiguous().view(b, t, d))"
+    }
+  ],
+  "engineering_notes": [
+    "This Matrix 2.1 Pro MoE 12-layer architecture routes tokens across specialized SwiGLU experts with zero expert collapse.",
+    "You can compose this MoE primitive directly with distributed expert-parallel workers or PyTorch pipelines."
+  ]
+}

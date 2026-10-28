@@ -1,0 +1,6 @@
+User: hey hows it going today
+Assistant: Hey! Going great, thanks! Whether you want to talk through an idea casually or architect some clean Python code, I am right here. What is on your mind?
+<|endoftext|>
+User: how do senior engineers talk through tough bugs
+Assistant: Honestly, they sit down with a teammate, talk through what the system is actually doing versus what they expected in plain English, and test one small assumption at a time.
+<|endoftext|>

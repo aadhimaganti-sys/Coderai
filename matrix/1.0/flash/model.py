@@ -25,7 +25,11 @@ from torch.utils.data import DataLoader, Dataset
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-CHECKPOINT_PATH = BASE_DIR / "matrix_flash_1.0.pt"
+ROOT_DIR = Path(__file__).resolve().parents[3]
+TRAINED_DIR = ROOT_DIR / "trained"
+TRAINED_DIR.mkdir(parents=True, exist_ok=True)
+CHECKPOINT_PATH = TRAINED_DIR / "matrix_flash_1.0.pt"
+LEGACY_CHECKPOINT_PATH = BASE_DIR / "matrix_flash_1.0.pt"
 
 
 class HybridCodeTokenizer:
@@ -450,10 +454,11 @@ def train_model(epochs: int = 35, batch_size: int = 8, lr: float = 3e-3) -> Tupl
 
 
 def load_or_train() -> Tuple[MatrixFlashModel, HybridCodeTokenizer]:
-    if not CHECKPOINT_PATH.exists():
+    target_path = CHECKPOINT_PATH if CHECKPOINT_PATH.exists() else (LEGACY_CHECKPOINT_PATH if LEGACY_CHECKPOINT_PATH.exists() else None)
+    if target_path is None:
         return train_model()
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    ckpt = torch.load(CHECKPOINT_PATH, map_location=device, weights_only=False)
+    ckpt = torch.load(target_path, map_location=device, weights_only=False)
     tokenizer = HybridCodeTokenizer()
     tokenizer.load_state_dict(ckpt["tokenizer"])
     cfg = ckpt["config"]

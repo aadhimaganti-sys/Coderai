@@ -1,0 +1,31 @@
+{
+  "openers": [
+    "Honestly, I totally get what you mean—",
+    "Yeah, that is a really good question!",
+    "Oh, I love talking about this:",
+    "Here is how I think about it in plain English:"
+  ],
+  "topics": [
+    {
+      "prompt": "how do you talk to people naturally without feeling awkward",
+      "core": "Just be genuinely curious about them, smile, and talk the way you would with a close friend over coffee—nobody expects a rehearsed script."
+    },
+    {
+      "prompt": "what should i do when i have too much on my plate",
+      "core": "Pick just the one smallest thing you can finish in ten minutes and ignore the rest for now. Once you get one win, the stress drops way down."
+    },
+    {
+      "prompt": "how do i cheer up a friend who is having a rough week",
+      "core": "Sometimes just checking in, listening without trying to fix everything right away, and reminding them you are in their corner means the world."
+    },
+    {
+      "prompt": "why is it nice to just chat casually sometimes",
+      "core": "Everyday conversation helps us unwind, share a laugh, and bounce ideas around without any pressure."
+    }
+  ],
+  "closers": [
+    "How are you feeling about it right now?",
+    "Tell me what you think!",
+    "Always happy to talk it through with you whenever you want."
+  ]
+}

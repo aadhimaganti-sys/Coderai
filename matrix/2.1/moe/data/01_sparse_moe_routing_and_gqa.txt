@@ -1,0 +1,114 @@
+User: implement a DeepSeek-style fine-grained shared plus routed sparse mixture of experts MoE layer with router z-loss in pytorch
+Assistant: Combining always-active shared SwiGLU experts with top-k routed specialists—regularized by both Switch load-balancing loss and router z-loss—prevents expert collapse and stabilizes half-precision training:
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SwiGLUExpert(nn.Module):
+    def __init__(self, d_model: int, hidden_dim: int):
+        super().__init__()
+        self.w_gate = nn.Linear(d_model, hidden_dim, bias=False)
+        self.w_val = nn.Linear(d_model, hidden_dim, bias=False)
+        self.w_out = nn.Linear(hidden_dim, d_model, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.w_out(F.silu(self.w_gate(x)) * self.w_val(x))
+
+class FineGrainedMoELayer(nn.Module):
+    def __init__(self, d_model: int, hidden_dim: int, n_experts: int = 6, top_k: int = 2):
+        super().__init__()
+        self.n_experts = n_experts
+        self.top_k = top_k
+        self.shared_expert = SwiGLUExpert(d_model, hidden_dim // 2)
+        self.router = nn.Linear(d_model, n_experts, bias=False)
+        self.experts = nn.ModuleList([SwiGLUExpert(d_model, hidden_dim) for _ in range(n_experts)])
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        router_logits = self.router(x)
+        z_loss = torch.mean(torch.logsumexp(router_logits, dim=-1) ** 2) * 1e-3
+        probs = F.softmax(router_logits, dim=-1)
+        top_w, top_idx = torch.topk(probs, k=self.top_k, dim=-1)
+        top_w = top_w / (top_w.sum(dim=-1, keepdim=True) + 1e-8)
+
+        routed = torch.zeros_like(x)
+        dispatch_counts = torch.zeros(self.n_experts, device=x.device)
+        for k in range(self.top_k):
+            idx_k = top_idx[..., k]
+            w_k = top_w[..., k].unsqueeze(-1)
+            for e_id, expert in enumerate(self.experts):
+                mask = (idx_k == e_id).unsqueeze(-1)
+                dispatch_counts[e_id] += mask.float().sum()
+                if mask.any():
+                    routed = routed + mask * w_k * expert(x)
+
+        frac_routed = dispatch_counts / (dispatch_counts.sum() + 1e-8)
+        mean_prob = probs.mean(dim=(0, 1))
+        balance_loss = (frac_routed * mean_prob).sum() * self.n_experts
+        return 0.35 * self.shared_expert(x) + 0.65 * routed, balance_loss + z_loss
+```
+<|endoftext|>
+User: implement expert capacity factor token dropping and overflow routing for sparse MoE in pytorch
+Assistant: Enforcing a per-expert capacity bound guarantees predictable memory and compute per device in distributed Mixture-of-Experts training while routing overflow tokens through the residual connection:
+```python
+import math
+import torch
+import torch.nn.functional as F
+
+def capacity_bounded_top1_routing(
+    x: torch.Tensor,
+    router_logits: torch.Tensor,
+    experts: list,
+    capacity_factor: float = 1.25,
+) -> torch.Tensor:
+    b, t, d = x.size()
+    num_tokens = b * t
+    num_experts = router_logits.size(-1)
+    capacity = max(1, int(math.ceil((num_tokens / num_experts) * capacity_factor)))
+
+    flat_x = x.view(num_tokens, d)
+    probs = F.softmax(router_logits.view(num_tokens, num_experts), dim=-1)
+    top_w, top_idx = probs.max(dim=-1)
+
+    out = flat_x.clone()
+    for e_id, expert in enumerate(experts):
+        token_positions = torch.nonzero(top_idx == e_id, as_tuple=False).squeeze(-1)
+        if token_positions.numel() == 0:
+            continue
+        selected = token_positions[:capacity]
+        weights = top_w[selected].unsqueeze(-1)
+        out[selected] = flat_x[selected] + weights * expert(flat_x[selected])
+    return out.view(b, t, d)
+```
+<|endoftext|>
+User: write an auxiliary-loss-free MoE router with dynamic expert bias balancing in pytorch
+Assistant: Updating a non-differentiable per-expert bias term proportional to load imbalance balances expert utilization without polluting language modeling gradients:
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class BiasBalancedRouter(nn.Module):
+    def __init__(self, d_model: int, n_experts: int = 6, top_k: int = 2, bias_lr: float = 0.01):
+        super().__init__()
+        self.n_experts = n_experts
+        self.top_k = top_k
+        self.bias_lr = bias_lr
+        self.gate = nn.Linear(d_model, n_experts, bias=False)
+        self.register_buffer("expert_bias", torch.zeros(n_experts))
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        scores = torch.sigmoid(self.gate(x))
+        biased_scores = scores + self.expert_bias
+        _, top_idx = torch.topk(biased_scores, k=self.top_k, dim=-1)
+        top_w = torch.gather(scores, dim=-1, index=top_idx)
+        top_w = top_w / (top_w.sum(dim=-1, keepdim=True) + 1e-8)
+
+        if self.training:
+            with torch.no_grad():
+                counts = torch.bincount(top_idx.reshape(-1), minlength=self.n_experts).float()
+                target = counts.mean()
+                self.expert_bias += self.bias_lr * torch.sign(target - counts)
+        return top_w, top_idx
+```
+<|endoftext|>

@@ -2,11 +2,15 @@
 """
 Global Model Trainer (`train.py`)
 Trains all Matrix (coding) and Delphi (conversational) AI models across
-Generation 1.0 and Generation 1.1:
+Generation 1.0, Generation 1.1, Generation 2.0, and Generation 2.1 MoE (12-Layer Sparse-MoE Models):
   - matrix/1.0/flash, matrix/1.0/pro
   - delphi/1.0/flash, delphi/1.0/pro
   - matrix/1.1/flash, matrix/1.1/pro
   - delphi/1.1/flash, delphi/1.1/pro
+  - matrix/2.0/flash, matrix/2.0/pro
+  - delphi/2.0/flash, delphi/2.0/pro
+  - matrix/2.1/flash, matrix/2.1/pro, matrix/2.1/moe
+  - delphi/2.1/flash, delphi/2.1/pro, delphi/2.1/moe
 
 Can also run the anti-memorization fine-tuner (`finetune.py`) automatically
 with `--with-finetune` so every trained model is verified not to copy verbatim
@@ -104,6 +108,106 @@ ALL_MODELS: List[Dict[str, Any]] = [
         "default_epochs": 45,
         "sample_prompt": "how does information theory connect thermodynamics and language",
     },
+    {
+        "key": "matrix-2.0-flash",
+        "gen": "2.0",
+        "family": "matrix",
+        "tier": "flash",
+        "name": "Matrix 2.0 Flash",
+        "script": ROOT_DIR / "matrix" / "2.0" / "flash" / "model.py",
+        "default_epochs": 35,
+        "sample_prompt": "write a python decorator that retries a failing function with exponential backoff",
+    },
+    {
+        "key": "matrix-2.0-pro",
+        "gen": "2.0",
+        "family": "matrix",
+        "tier": "pro",
+        "name": "Matrix 2.0 Pro",
+        "script": ROOT_DIR / "matrix" / "2.0" / "pro" / "model.py",
+        "default_epochs": 40,
+        "sample_prompt": "implement grouped query attention GQA with rotary position embeddings in pytorch",
+    },
+    {
+        "key": "delphi-2.0-flash",
+        "gen": "2.0",
+        "family": "delphi",
+        "tier": "flash",
+        "name": "Delphi 2.0 Flash",
+        "script": ROOT_DIR / "delphi" / "2.0" / "flash" / "model.py",
+        "default_epochs": 35,
+        "sample_prompt": "how can I build a habit of deep focus in a distracted world",
+    },
+    {
+        "key": "delphi-2.0-pro",
+        "gen": "2.0",
+        "family": "delphi",
+        "tier": "pro",
+        "name": "Delphi 2.0 Pro",
+        "script": ROOT_DIR / "delphi" / "2.0" / "pro" / "model.py",
+        "default_epochs": 40,
+        "sample_prompt": "how do symmetry principles shape the laws of physics and mathematics",
+    },
+    {
+        "key": "matrix-2.1-flash",
+        "gen": "2.1",
+        "family": "matrix",
+        "tier": "flash",
+        "name": "Matrix 2.1 Flash MoE",
+        "script": ROOT_DIR / "matrix" / "2.1" / "flash" / "model.py",
+        "default_epochs": 30,
+        "sample_prompt": "write a fast top-2 sparse MoE router function in pytorch",
+    },
+    {
+        "key": "matrix-2.1-pro",
+        "gen": "2.1",
+        "family": "matrix",
+        "tier": "pro",
+        "name": "Matrix 2.1 Pro MoE",
+        "script": ROOT_DIR / "matrix" / "2.1" / "pro" / "model.py",
+        "default_epochs": 35,
+        "sample_prompt": "implement a DeepSeek-style fine-grained shared plus routed sparse mixture of experts MoE layer with router z-loss in pytorch",
+    },
+    {
+        "key": "matrix-2.1-moe",
+        "gen": "2.1",
+        "family": "matrix",
+        "tier": "moe",
+        "name": "Matrix 2.1 MoE",
+        "script": ROOT_DIR / "matrix" / "2.1" / "moe" / "model.py",
+        "default_epochs": 35,
+        "sample_prompt": "implement a DeepSeek-style fine-grained shared plus routed sparse mixture of experts MoE layer with router z-loss in pytorch",
+    },
+    {
+        "key": "delphi-2.1-flash",
+        "gen": "2.1",
+        "family": "delphi",
+        "tier": "flash",
+        "name": "Delphi 2.1 Flash MoE",
+        "script": ROOT_DIR / "delphi" / "2.1" / "flash" / "model.py",
+        "default_epochs": 30,
+        "sample_prompt": "how can switching between different mental modes help me solve creative problems",
+    },
+    {
+        "key": "delphi-2.1-pro",
+        "gen": "2.1",
+        "family": "delphi",
+        "tier": "pro",
+        "name": "Delphi 2.1 Pro MoE",
+        "script": ROOT_DIR / "delphi" / "2.1" / "pro" / "model.py",
+        "default_epochs": 35,
+        "sample_prompt": "how does a mixture of experts mind mirror the way human intuition and reasoning collaborate",
+    },
+    {
+        "key": "delphi-2.1-moe",
+        "gen": "2.1",
+        "family": "delphi",
+        "tier": "moe",
+        "name": "Delphi 2.1 MoE",
+        "script": ROOT_DIR / "delphi" / "2.1" / "moe" / "model.py",
+        "default_epochs": 35,
+        "sample_prompt": "how does a mixture of experts mind mirror the way human intuition and reasoning collaborate",
+    },
 ]
 
 
@@ -133,6 +237,9 @@ def train_entry(entry: Dict[str, Any], epochs_override: int | None = None) -> No
     model, tokenizer = mod.train_model(epochs=epochs)
     elapsed = time.perf_counter() - start_t
 
+    param_count = sum(p.numel() for p in model.parameters())
+    num_layers = len(model.blocks) if hasattr(model, "blocks") else 0
+
     # Run a quick sample generation check
     prompt = entry["sample_prompt"]
     if hasattr(mod, "answer_prompt"):
@@ -140,6 +247,7 @@ def train_entry(entry: Dict[str, Any], epochs_override: int | None = None) -> No
     else:
         sample_out = mod.reply_to_user(prompt, model, tokenizer)
 
+    print(f"[{entry['name']}] Architecture: {num_layers} hidden layers | {param_count:,} parameters")
     print(f"[{entry['name']}] Trained in {elapsed:.2f}s")
     print(f"[{entry['name']}] Sample Prompt: {prompt!r}")
     print(f"[{entry['name']}] Sample Response:\n{sample_out}\n")
@@ -148,11 +256,11 @@ def train_entry(entry: Dict[str, Any], epochs_override: int | None = None) -> No
 def main() -> None:
     valid_keys = ["all"] + [m["key"] for m in ALL_MODELS]
     parser = argparse.ArgumentParser(
-        description="Train all Matrix (coding) and Delphi (conversational) AI models across Gen 1.0 and Gen 1.1"
+        description="Train all Matrix (coding) and Delphi (conversational) AI models across Gen 1.0, 1.1, 2.0, and 2.1 MoE"
     )
     parser.add_argument(
         "--gen",
-        choices=["all", "1.0", "1.1"],
+        choices=["all", "1.0", "1.1", "2.0", "2.1"],
         default="all",
         help="Which generation of models to train (default: all)",
     )
@@ -164,9 +272,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--tier",
-        choices=["all", "flash", "pro"],
+        choices=["all", "flash", "pro", "moe"],
         default="all",
-        help="Filter by model tier: flash (fast) or pro (heavy)",
+        help="Filter by model tier: flash (fast), pro (heavy), or moe (flagship sparse MoE)",
     )
     parser.add_argument(
         "--target",

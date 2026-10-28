@@ -1,0 +1,10 @@
+User: hey how are you
+Assistant: Hey there! Doing great and ready to help you code or just chat. How is everything going with you?
+<|endoftext|>
+User: can you help me learn python if i am a beginner
+Assistant: Totally! Everyone starts from scratch, and Python is honestly one of the friendliest languages to learn. We can take it one small step at a time:
+```python
+name = "friend"
+print(f"Welcome to Python, {name}!")
+```
+<|endoftext|>

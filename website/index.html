@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matrix &amp; Delphi AI Studio — Gen 2.1 MoE Coding &amp; Research IDE</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="studio-shell">
+    <!-- Far-Left Navigation Rail (Google AI Studio style) -->
+    <nav class="nav-rail" aria-label="Studio Workspace Modes">
+      <div class="rail-brand" title="Matrix & Delphi AI Studio">M&bull;D</div>
+
+      <div class="rail-buttons">
+        <button class="rail-btn active" data-view="studio" title="Chat & Coding Studio">
+          <span class="rail-icon">&#128172;</span>
+          <span class="rail-label">Studio</span>
+        </button>
+        <button class="rail-btn" data-view="compare" title="Side-by-Side Model Comparison Arena">
+          <span class="rail-icon">&#9878;</span>
+          <span class="rail-label">Compare</span>
+        </button>
+        <button class="rail-btn" data-view="structured" title="Structured Few-Shot Prompt Builder">
+          <span class="rail-icon">&#9881;</span>
+          <span class="rail-label">Few-Shot</span>
+        </button>
+        <button class="rail-btn" data-view="moe" title="Gen 2.1 Sparse MoE Router & Telemetry Inspector">
+          <span class="rail-icon">&#129504;</span>
+          <span class="rail-label">MoE Lab</span>
+        </button>
+        <button class="rail-btn" data-view="explorer" title="Codebase & Training Corpus Explorer">
+          <span class="rail-icon">&#128193;</span>
+          <span class="rail-label">Files</span>
+        </button>
+      </div>
+
+      <div class="rail-footer">
+        <button id="toggle-right-panel-btn" class="rail-btn" title="Toggle Run Settings Panel">
+          <span class="rail-icon">&#9776;</span>
+          <span class="rail-label">Settings</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Left Sidebar: Model Selector, Prompt Library & File Tree -->
+    <aside class="sidebar">
+      <div class="brand-header">
+        <div>
+          <div class="studio-badge-row">
+            <span class="studio-badge">GOOGLE AI STUDIO EDITION</span>
+            <span class="studio-gen-badge">GEN 2.1 MoE</span>
+          </div>
+          <h1 class="brand-title">Matrix &amp; Delphi Studio</h1>
+          <p class="brand-subtitle">12-Layer Sparse MoE &bull; Coding &amp; Reasoning IDE</p>
+        </div>
+      </div>
+
+      <!-- Model Search & Family Filter -->
+      <div class="sidebar-search-wrap">
+        <input
+          id="model-search-input"
+          type="search"
+          class="sidebar-search"
+          placeholder="Search 18 models (e.g. 2.1 MoE, GQA, Flash)..."
+          aria-label="Search AI models"
+        />
+        <div class="family-filter-row" role="group" aria-label="Model Family Filter">
+          <button class="family-chip active" data-family="all">All Families</button>
+          <button class="family-chip" data-family="matrix">Matrix (Code)</button>
+          <button class="family-chip" data-family="delphi">Delphi (Chat)</button>
+        </div>
+      </div>
+
+      <!-- Generation Filter Bar -->
+      <div class="filter-bar" role="tablist" aria-label="Generation Filter">
+        <button class="filter-btn active" data-gen="2.1">2.1 MoE</button>
+        <button class="filter-btn" data-gen="2.0">2.0</button>
+        <button class="filter-btn" data-gen="1.1">1.1</button>
+        <button class="filter-btn" data-gen="1.0">1.0</button>
+        <button class="filter-btn" data-gen="all">All (18)</button>
+      </div>
+
+      <!-- Available AI Models List -->
+      <div id="model-list" class="model-list" aria-label="Available AI Models"></div>
+
+      <!-- Saved Prompt Library / History -->
+      <div class="saved-prompts-card">
+        <div class="saved-header">
+          <span class="card-badge">Prompt Library &amp; History</span>
+          <button id="save-prompt-btn" class="btn-xs" title="Save current prompt to library">+ Save</button>
+        </div>
+        <div id="saved-prompts-list" class="saved-prompts-list"></div>
+      </div>
+
+      <div class="anti-copy-card">
+        <div class="card-badge">Gen 2.1 Sparse-MoE Guard</div>
+        <h3>Zero Verbatim Training Copy</h3>
+        <ul>
+          <li><strong>12 Hidden Layers</strong> + <strong>11M&ndash;25M+ Params</strong> (2.1 MoE)</li>
+          <li><strong>GQA + Shared &amp; Routed Top-2 Experts</strong> + Router Z-Loss</li>
+          <li><strong>Over-Confidence Cap</strong> (<code>p &le; 0.65</code>) + Unlikelihood</li>
+          <li><strong>3/4-Gram Blocker</strong> guarantees original synthesis</li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Center Main Workspace -->
+    <main class="workspace">
+      <!-- Top Google AI Studio Header / Telemetry Bar -->
+      <header class="telemetry-bar">
+        <div class="active-model-summary">
+          <div class="summary-top-row">
+            <span id="active-family-pill" class="pill pill-matrix">MATRIX CODING AI</span>
+            <span id="token-counter-pill" class="pill pill-neutral" title="Estimated prompt + completion tokens">0 tokens</span>
+          </div>
+          <h2 id="active-model-name">Matrix 2.1 MoE</h2>
+          <p id="active-model-tagline">12-Layer GQA + 6-Expert Fine-Grained Shared+Sparse MoE Coding AI</p>
+        </div>
+
+        <div class="telemetry-metrics">
+          <div class="metric-box">
+            <span class="metric-label">Parameters</span>
+            <span id="metric-params" class="metric-value highlight">25,419,072</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Hidden Layers</span>
+            <span id="metric-layers" class="metric-value highlight">12 Hidden Layers</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Architecture</span>
+            <span id="metric-arch" class="metric-value">GQA + RoPE + 6+1 Sparse MoE</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Anti-Copy Guard</span>
+            <span id="metric-guard" class="metric-value badge-ok">3/4-Gram + Router Z-Loss</span>
+          </div>
+        </div>
+
+        <!-- Google AI Studio Action Toolbar -->
+        <div class="studio-toolbar-actions">
+          <button id="toggle-sandbox-btn" class="btn-studio active" title="Toggle Split-Pane Python Code Editor & Runner">
+            &#128187; Code Sandbox
+          </button>
+          <button id="get-code-btn" class="btn-studio" title="Get Python, PyTorch CLI, cURL, or JS SDK code for this prompt">
+            &lt;/&gt; Get Code
+          </button>
+          <button id="export-chat-btn" class="btn-ghost" title="Export session as Markdown/JSON">
+            &#8681; Export
+          </button>
+        </div>
+      </header>
+
+      <!-- Collapsible System Instructions Bar (Google AI Studio style) -->
+      <section class="system-instructions-bar">
+        <div class="sys-header" id="sys-toggle-header">
+          <div class="sys-title-group">
+            <span class="sys-badge">SYSTEM INSTRUCTIONS</span>
+            <span id="sys-preview-text" class="sys-preview">
+              Optional persona, coding style, or architectural constraints injected into the model context...
+            </span>
+          </div>
+          <button type="button" id="sys-expand-btn" class="btn-xs">Edit Instructions &#9662;</button>
+        </div>
+        <div id="sys-body" class="sys-body hidden">
+          <textarea
+            id="system-instruction-input"
+            rows="2"
+            placeholder="e.g. You are Matrix 2.1 MoE, a principal PyTorch systems architect. Favor clean type annotations, modular classes, and O(1) memory bounds."
+          ></textarea>
+          <div class="sys-presets">
+            <span>Presets:</span>
+            <button type="button" class="sys-preset-chip" data-sys="Write clean, production-grade Python 3.11+ with type hints and concise algorithmic complexity notes.">Clean Python Architect</button>
+            <button type="button" class="sys-preset-chip" data-sys="Focus on PyTorch tensor operations, Sparse Mixture-of-Experts routing, and numerical stability.">PyTorch MoE Researcher</button>
+            <button type="button" class="sys-preset-chip" data-sys="Explain concepts warmly in plain everyday language with relatable analogies before diving into technical details.">Warm Human Explainer</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sample Prompts & Quick Controls Strip -->
+      <section class="control-strip">
+        <div class="prompt-chips-wrap">
+          <span class="chip-label">Starter prompts:</span>
+          <div id="sample-prompts" class="prompt-chips"></div>
+        </div>
+
+        <div class="controls-right">
+          <button id="clear-btn" class="btn-ghost" title="Clear conversation">Clear Chat</button>
+        </div>
+      </section>
+
+      <!-- Dynamic Workspace Views -->
+      <div class="studio-main-split" id="studio-main-split">
+        <!-- Left/Center Column: Active View (Chat / Compare / Structured / MoE Lab / File Explorer) -->
+        <div class="primary-pane">
+          <!-- VIEW 1: Interactive Chat Stream -->
+          <section id="view-studio" class="workspace-view active">
+            <div id="chat-stream" class="chat-stream" aria-live="polite">
+              <div class="welcome-banner">
+                <div class="welcome-top">
+                  <h3>Welcome to Matrix &amp; Delphi AI Studio (Gen 2.1 MoE)</h3>
+                  <span class="novelty-pill">18 Neural Models Online</span>
+                </div>
+                <p>
+                  Explore <strong>Matrix 2.1 MoE</strong> (12-layer GQA + 6-Expert Sparse MoE coding &amp; systems architecture) and
+                  <strong>Delphi 2.1 MoE</strong> (12-layer deep science, reasoning &amp; warm human dialogue). Use the
+                  <strong>Split-Pane Code Sandbox</strong> on the right to edit and execute generated Python &amp; PyTorch code live,
+                  switch to <strong>Compare</strong> for side-by-side A/B model evaluation, or click <strong>&lt;/&gt; Get Code</strong> for SDK snippets.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- VIEW 2: Side-by-Side Model Comparison Arena -->
+          <section id="view-compare" class="workspace-view hidden">
+            <div class="compare-header-bar">
+              <div class="compare-selector">
+                <label for="compare-model-a">Model A:</label>
+                <select id="compare-model-a" class="studio-select"></select>
+              </div>
+              <span class="vs-badge">VS</span>
+              <div class="compare-selector">
+                <label for="compare-model-b">Model B:</label>
+                <select id="compare-model-b" class="studio-select"></select>
+              </div>
+              <button id="run-compare-btn" class="btn-primary">Run Side-by-Side Comparison &rarr;</button>
+            </div>
+            <div class="compare-grid">
+              <div class="compare-column">
+                <div id="compare-header-a" class="compare-col-title">Model A Output</div>
+                <div id="compare-output-a" class="compare-stream">
+                  <p class="muted-placeholder">Enter a prompt below and click "Run Side-by-Side Comparison" (or press Send) to compare two models simultaneously.</p>
+                </div>
+              </div>
+              <div class="compare-column">
+                <div id="compare-header-b" class="compare-col-title">Model B Output</div>
+                <div id="compare-output-b" class="compare-stream">
+                  <p class="muted-placeholder">Compare Gen 2.1 MoE against Gen 2.0 Pro, Flash, or Gen 1.1 models with live latency, novelty %, and MoE routing metrics.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- VIEW 3: Structured Few-Shot Prompt Builder -->
+          <section id="view-structured" class="workspace-view hidden">
+            <div class="structured-container">
+              <div class="structured-head">
+                <div>
+                  <h3>Structured Few-Shot Prompt Workbench</h3>
+                  <p>Define input/output demonstration pairs and template variables (like Google AI Studio Structured Prompts) to steer generation format.</p>
+                </div>
+                <div class="structured-actions">
+                  <button id="add-fewshot-btn" class="btn-secondary">+ Add Example Pair</button>
+                  <button id="compile-structured-btn" class="btn-primary">Compile &amp; Run in Studio &rarr;</button>
+                </div>
+              </div>
+              <div id="fewshot-list" class="fewshot-list"></div>
+              <div class="structured-test-box">
+                <label for="structured-test-input">Test Input (appended after few-shot examples):</label>
+                <textarea id="structured-test-input" rows="3" placeholder="implement a capacity-bounded sparse MoE router with overflow skip connections in pytorch"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <!-- VIEW 4: Gen 2.1 Sparse MoE Router & Architecture Telemetry Lab -->
+          <section id="view-moe" class="workspace-view hidden">
+            <div class="moe-lab-container">
+              <div class="moe-lab-header">
+                <h3>Gen 2.1 Sparse Mixture-of-Experts (MoE) Architecture &amp; Router Telemetry</h3>
+                <p>Live inspection of token dispatch across Shared Expert (<code>S0</code>) + Top-2 Routed SwiGLU Specialists (<code>E1&ndash;E6</code>), Grouped-Query Attention (GQA), and Anti-Memorization Guards.</p>
+              </div>
+              <div class="moe-cards-grid">
+                <div class="moe-telemetry-panel">
+                  <h4>Live Expert Routing Distribution (Top-2 Active + 1 Shared)</h4>
+                  <div id="moe-lab-bars" class="moe-bars-large"></div>
+                </div>
+                <div class="moe-telemetry-panel">
+                  <h4>Gen 2.1 MoE Architectural Blueprint</h4>
+                  <ul class="arch-spec-list">
+                    <li><strong>Depth:</strong> 12 Hidden Transformer Blocks (<code>ProMoETransformerBlock2_1</code>)</li>
+                    <li><strong>Attention:</strong> Grouped-Query Attention (8 Query Heads / 2 or 4 KV Heads) + RoPE + QK-RMSNorm</li>
+                    <li><strong>MoE Feed-Forward:</strong> <code>0.35 * SharedSwiGLU(x) + 0.65 * Top2RoutedSwiGLU(x)</code></li>
+                    <li><strong>Router Stabilization:</strong> Switch Load-Balancing Loss + Router Z-Loss (<code>1e-3 * logsumexp^2</code>) + Dynamic Bias Balancing</li>
+                    <li><strong>Anti-Copy Guarantee:</strong> 3-Gram &amp; 4-Gram Training Index Blocker + Temporal Unlikelihood + Over-Confidence Cap</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- VIEW 5: Codebase & Dataset Explorer -->
+          <section id="view-explorer" class="workspace-view hidden">
+            <div class="explorer-layout">
+              <div class="explorer-sidebar">
+                <div class="explorer-sidebar-head">
+                  <h4>Workspace Files</h4>
+                  <button id="refresh-files-btn" class="btn-xs">Refresh</button>
+                </div>
+                <div id="workspace-file-list" class="workspace-file-list"></div>
+              </div>
+              <div class="explorer-preview">
+                <div class="explorer-preview-head">
+                  <span id="explorer-current-path" class="mono-path">matrix/2.1/moe/model.py</span>
+                  <div class="explorer-preview-actions">
+                    <button id="open-in-sandbox-btn" class="btn-secondary">Open in Code Sandbox &rarr;</button>
+                  </div>
+                </div>
+                <pre id="explorer-code-view" class="explorer-code-view">Select a file on the left to inspect its source code or training data...</pre>
+              </div>
+            </div>
+          </section>
+
+          <!-- Bottom Prompt Composer (Google AI Studio style) -->
+          <footer class="composer">
+            <form id="chat-form" class="composer-form">
+              <div class="composer-input-wrap">
+                <textarea
+                  id="prompt-input"
+                  rows="2"
+                  placeholder="Enter a coding prompt for Matrix 2.1 MoE, or a deep question for Delphi 2.1 MoE... (Ctrl+Enter to send)"
+                  required
+                ></textarea>
+              </div>
+              <div class="composer-buttons">
+                <button id="send-btn" type="submit" class="btn-primary">
+                  Run Prompt &#9166;
+                </button>
+              </div>
+            </form>
+          </footer>
+        </div>
+
+        <!-- Right-Center Split Pane: Live Python & PyTorch Code Sandbox IDE -->
+        <section id="code-sandbox-pane" class="code-sandbox-pane">
+          <div class="sandbox-header">
+            <div class="sandbox-tabs" id="sandbox-tabs">
+              <button type="button" class="sandbox-tab active" data-tab="scratch_moe.py">scratch_moe.py</button>
+              <button type="button" class="sandbox-tab" data-tab="gqa_attention.py">gqa_attention.py</button>
+              <button type="button" class="sandbox-tab" data-tab="custom_test.py">custom_test.py</button>
+            </div>
+            <div class="sandbox-actions">
+              <button type="button" id="ai-explain-code-btn" class="btn-xs" title="Ask active AI model to explain or optimize editor code">
+                &#10024; Ask AI
+              </button>
+              <button type="button" id="copy-editor-btn" class="btn-xs" title="Copy code to clipboard">
+                Copy
+              </button>
+              <button type="button" id="run-code-btn" class="btn-run-code" title="Execute Python/PyTorch code in workspace sandbox">
+                &#9654; Run Python
+              </button>
+            </div>
+          </div>
+
+          <div class="sandbox-editor-wrap">
+            <div id="editor-line-numbers" class="editor-line-numbers">1</div>
+            <textarea
+              id="code-editor-textarea"
+              class="code-editor-textarea"
+              spellcheck="false"
+              aria-label="Python Code Sandbox Editor"
+            ></textarea>
+          </div>
+
+          <div class="sandbox-console">
+            <div class="console-header">
+              <span>TERMINAL OUTPUT (PYTHON / PYTORCH SANDBOX)</span>
+              <div class="console-meta">
+                <span id="sandbox-status-pill" class="console-pill">Ready</span>
+                <button type="button" id="clear-console-btn" class="btn-xs">Clear</button>
+              </div>
+            </div>
+            <pre id="sandbox-console-output" class="console-output">Click "&#9654; Run Python" above or "&#9654; Run in Sandbox" on any chat code block to execute live Python/PyTorch code.</pre>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Right-Hand "Run Settings" Panel (Google AI Studio Inspector) -->
+    <aside id="run-settings-panel" class="run-settings-panel" aria-label="Run Settings">
+      <div class="settings-section">
+        <div class="settings-title-row">
+          <h3>Run Settings</h3>
+          <button id="reset-settings-btn" class="btn-xs" title="Reset hyperparameters to defaults">Reset</button>
+        </div>
+
+        <label class="setting-label" for="settings-model-select">Active Model</label>
+        <select id="settings-model-select" class="studio-select full-width"></select>
+      </div>
+
+      <!-- Hyperparameter Sliders -->
+      <div class="settings-section">
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <label for="temp-slider">Temperature</label>
+            <strong id="temp-val">0.85</strong>
+          </div>
+          <input id="temp-slider" type="range" min="0.1" max="1.4" step="0.05" value="0.85" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <label for="topk-slider">Top-K Sampling</label>
+            <strong id="topk-val">30</strong>
+          </div>
+          <input id="topk-slider" type="range" min="1" max="60" step="1" value="30" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <label for="topp-slider">Top-P (Nucleus)</label>
+            <strong id="topp-val">0.92</strong>
+          </div>
+          <input id="topp-slider" type="range" min="0.5" max="1.0" step="0.02" value="0.92" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <label for="maxtokens-slider">Max Output Tokens</label>
+            <strong id="maxtokens-val">150</strong>
+          </div>
+          <input id="maxtokens-slider" type="range" min="32" max="256" step="8" value="150" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <label for="reppen-slider">Repetition Penalty</label>
+            <strong id="reppen-val">1.25</strong>
+          </div>
+          <input id="reppen-slider" type="range" min="1.0" max="1.6" step="0.05" value="1.25" />
+        </div>
+      </div>
+
+      <!-- Live MoE Expert Utilization Mini-Chart -->
+      <div class="settings-section">
+        <div class="settings-title-row">
+          <h4>MoE Expert Load</h4>
+          <span class="badge-mini">Top-2 + Shared</span>
+        </div>
+        <div id="sidebar-moe-bars" class="sidebar-moe-bars"></div>
+      </div>
+
+      <!-- Live PyTorch Training & Anti-Copy Fine-Tuning Console -->
+      <div class="settings-section training-box">
+        <div class="settings-title-row">
+          <h4>Model Trainer &amp; Fine-Tuner</h4>
+          <span class="badge-mini">PyTorch</span>
+        </div>
+        <div class="epochs-row">
+          <label for="train-epochs-input">Epochs:</label>
+          <input id="train-epochs-input" type="number" min="1" max="100" value="20" class="epochs-input" />
+        </div>
+        <div class="train-btn-group">
+          <button id="train-btn" class="btn-secondary full-width" title="Train active model with Anti-Repetition & MoE Z-Loss">
+            &#9889; Train / Fine-Tune Model
+          </button>
+          <button id="finetune-btn" class="btn-ghost full-width" title="Run global Anti-Memorization N-gram & Unlikelihood Fine-Tuning pass">
+            &#128737; Run Anti-Copy Fine-Tuner
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Google AI Studio "Get Code" Modal -->
+  <div id="get-code-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="get-code-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="get-code-title">&lt;/&gt; Get Code — Reproduce This Model Run</h3>
+        <button id="close-code-modal-btn" class="btn-xs">Close &#10005;</button>
+      </div>
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-lang="python">Python SDK</button>
+        <button class="modal-tab" data-lang="cli">PyTorch CLI</button>
+        <button class="modal-tab" data-lang="curl">cURL REST</button>
+        <button class="modal-tab" data-lang="js">JavaScript Fetch</button>
+      </div>
+      <pre id="modal-code-content" class="modal-code-block"></pre>
+      <div class="modal-footer">
+        <button id="copy-modal-code-btn" class="btn-primary">Copy Snippet</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

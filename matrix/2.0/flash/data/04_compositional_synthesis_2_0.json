@@ -1,0 +1,35 @@
+{
+  "task_verbs": ["write", "create", "implement", "design", "craft", "build", "synthesize"],
+  "concepts": [
+    {
+      "topic": "compute softmax with temperature scaling in numpy",
+      "explanation": "Divide logits by temperature and subtract the maximum value before exponentiating for numerical stability:",
+      "code": "import numpy as np\n\ndef scaled_softmax(logits: np.ndarray, temp: float = 1.0) -> np.ndarray:\n    z = (logits - np.max(logits)) / max(temp, 1e-6)\n    exp_z = np.exp(z)\n    return exp_z / np.sum(exp_z)"
+    },
+    {
+      "topic": "implement binary search for the first element greater than or equal to target",
+      "explanation": "Narrow the half-open search range `[lo, hi)` by comparing the midpoint against the target value:",
+      "code": "def lower_bound(arr: list, target) -> int:\n    lo, hi = 0, len(arr)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if arr[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid\n    return lo"
+    },
+    {
+      "topic": "batch an iterable into fixed-size chunks in python",
+      "explanation": "Slice or accumulate items into lists of length `batch_size` using a clean generator:",
+      "code": "def chunked(iterable, batch_size: int):\n    batch = []\n    for item in iterable:\n        batch.append(item)\n        if len(batch) == batch_size:\n            yield batch\n            batch = []\n    if batch:\n        yield batch"
+    },
+    {
+      "topic": "build a residual layer scale wrapper in pytorch",
+      "explanation": "LayerScale multiplies the branch output by a learnable per-channel diagonal vector initialized to a small constant:",
+      "code": "import torch\nimport torch.nn as nn\n\nclass LayerScale(nn.Module):\n    def __init__(self, dim: int, init_value: float = 1e-2):\n        super().__init__()\n        self.gamma = nn.Parameter(torch.full((dim,), init_value))\n\n    def forward(self, x: torch.Tensor) -> torch.Tensor:\n        return x * self.gamma"
+    },
+    {
+      "topic": "track running mean and variance online using Welford algorithm",
+      "explanation": "Welford's recurrence updates the sample mean and sum of squared differences in a single streaming pass:",
+      "code": "class RunningStats:\n    def __init__(self):\n        self.n = 0\n        self.mean = 0.0\n        self.m2 = 0.0\n\n    def update(self, x: float) -> None:\n        self.n += 1\n        delta = x - self.mean\n        self.mean += delta / self.n\n        self.m2 += delta * (x - self.mean)\n\n    def variance(self) -> float:\n        return self.m2 / max(1, self.n - 1)"
+    }
+  ],
+  "followups": [
+    "This Gen 2.0 pattern integrates seamlessly into modern Python and PyTorch codebases.",
+    "You can compose this helper with type annotations and unit tests for production reliability.",
+    "It maintains clean time and memory bounds across edge cases."
+  ]
+}

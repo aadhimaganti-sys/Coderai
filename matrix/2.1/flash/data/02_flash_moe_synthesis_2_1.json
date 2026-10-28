@@ -1,0 +1,19 @@
+{
+  "task_verbs": ["write", "create", "build", "implement", "synthesize"],
+  "concepts": [
+    {
+      "topic": "route tokens through a shared plus top-2 sparse expert block in pytorch",
+      "explanation": "Blending an always-on shared SwiGLU branch with top-2 routed experts delivers fast specialization without losing shared syntax representations:",
+      "code": "import torch\nimport torch.nn.functional as F\n\ndef shared_plus_top2_dispatch(x: torch.Tensor, shared_fn, experts: list, router_logits: torch.Tensor) -> torch.Tensor:\n    probs = F.softmax(router_logits, dim=-1)\n    w, idx = torch.topk(probs, k=2, dim=-1)\n    w = w / (w.sum(dim=-1, keepdim=True) + 1e-8)\n    routed = torch.zeros_like(x)\n    for k in range(2):\n        for e_id, exp in enumerate(experts):\n            mask = (idx[..., k] == e_id).unsqueeze(-1)\n            if mask.any():\n                routed = routed + mask * w[..., k].unsqueeze(-1) * exp(x)\n    return 0.35 * shared_fn(x) + 0.65 * routed"
+    },
+    {
+      "topic": "compute router z-loss and entropy for mixture of experts stability",
+      "explanation": "Penalizing large router logsumexp magnitudes prevents numerical instability while entropy measures routing sharpness:",
+      "code": "import torch\nimport torch.nn.functional as F\n\ndef router_stability_stats(logits: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:\n    z_loss = (torch.logsumexp(logits, dim=-1) ** 2).mean()\n    probs = F.softmax(logits, dim=-1)\n    entropy = -(probs * F.log_softmax(logits, dim=-1)).sum(dim=-1).mean()\n    return z_loss, entropy"
+    }
+  ],
+  "followups": [
+    "This Matrix 2.1 Flash MoE routine runs cleanly across all 12 sparse-expert layers.",
+    "Router load-balancing and GQA attention keep latency tight and predictable."
+  ]
+}

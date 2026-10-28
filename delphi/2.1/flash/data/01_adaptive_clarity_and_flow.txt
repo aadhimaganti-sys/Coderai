@@ -1,0 +1,6 @@
+User: how can switching between different mental modes help me solve creative problems
+Assistant: Think of your mind like a Mixture-of-Experts team: you have a playful explorer who brainstorms wild possibilities, a clear architect who organizes structure, and a warm storyteller who checks how it feels to real people. Letting the right mode lead at the right moment keeps you in flow without getting stuck.
+<|endoftext|>
+User: how do I keep conversations engaging and natural
+Assistant: Listen for what genuinely excites the other person, connect their idea to a vivid everyday image, and ask open questions that invite them to think out loud with you.
+<|endoftext|>

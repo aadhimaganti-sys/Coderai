@@ -1,0 +1,31 @@
+{
+  "architectural_prefixes": [
+    "design and implement",
+    "architect a modular Gen 2.0 Python implementation to",
+    "build a high-throughput production module to",
+    "write a clean, extensible solution to",
+    "synthesize a resilient software component to"
+  ],
+  "modules": [
+    {
+      "goal": "build a KV-cache ring buffer for autoregressive transformer decoding",
+      "rationale": "Pre-allocating key and value tensors along the sequence axis avoids repeated memory allocations during token-by-token generation:",
+      "code": "import torch\n\nclass KVCacheBuffer:\n    def __init__(self, max_batch: int, n_heads: int, max_seq: int, head_dim: int, device: str = 'cpu'):\n        self.k = torch.zeros(max_batch, n_heads, max_seq, head_dim, device=device)\n        self.v = torch.zeros(max_batch, n_heads, max_seq, head_dim, device=device)\n        self.pos = 0\n\n    def update(self, new_k: torch.Tensor, new_v: torch.Tensor):\n        b, h, t, d = new_k.size()\n        self.k[:b, :, self.pos : self.pos + t, :] = new_k\n        self.v[:b, :, self.pos : self.pos + t, :] = new_v\n        self.pos += t\n        return self.k[:b, :, :self.pos, :], self.v[:b, :, :self.pos, :]"
+    },
+    {
+      "goal": "implement a DAG topological execution engine with dependency resolution",
+      "rationale": "Kahn's in-degree algorithm schedules independent nodes in parallel waves while detecting cyclic dependencies:",
+      "code": "from collections import deque\n\nclass DAGExecutor:\n    def __init__(self):\n        self.tasks = {}\n        self.deps = {}\n\n    def add_node(self, name: str, fn, depends_on: list[str] = None) -> None:\n        self.tasks[name] = fn\n        self.deps[name] = set(depends_on or [])\n\n    def run(self) -> dict:\n        in_deg = {u: len(d) for u, d in self.deps.items()}\n        ready = deque([u for u, deg in in_deg.items() if deg == 0])\n        results = {}\n        while ready:\n            node = ready.popleft()\n            dep_vals = {d: results[d] for d in self.deps[node]}\n            results[node] = self.tasks[node](dep_vals)\n            for other, other_deps in self.deps.items():\n                if node in other_deps:\n                    in_deg[other] -= 1\n                    if in_deg[other] == 0:\n                        ready.append(other)\n        if len(results) != len(self.tasks):\n            raise ValueError('Cycle detected in task DAG')\n        return results"
+    },
+    {
+      "goal": "implement cosine annealing with linear warmup learning rate schedule",
+      "rationale": "Warming up the learning rate linearly stabilizes early Transformer gradients before smoothly decaying along a half-cosine curve:",
+      "code": "import math\n\ndef warmup_cosine_lr(step: int, warmup_steps: int, total_steps: int, max_lr: float, min_lr: float = 1e-5) -> float:\n    if step < warmup_steps:\n        return max_lr * (step + 1) / max(1, warmup_steps)\n    progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)\n    progress = min(1.0, max(0.0, progress))\n    return min_lr + 0.5 * (max_lr - min_lr) * (1.0 + math.cos(math.pi * progress))"
+    }
+  ],
+  "engineering_notes": [
+    "This Matrix 2.0 Pro 10-layer architecture enforces clean abstraction boundaries and high throughput.",
+    "You can compose this module directly with distributed workers or deep PyTorch pipelines.",
+    "Invariants, numerical stability, and memory bounds are guarded explicitly."
+  ]
+}

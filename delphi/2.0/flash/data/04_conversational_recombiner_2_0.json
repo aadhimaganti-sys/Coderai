@@ -1,0 +1,31 @@
+{
+  "openers": [
+    "Here is a clear, energizing way to look at that:",
+    "That touches on a wonderful principle:",
+    "Consider how these pieces fit together:",
+    "Stepping into that question with fresh eyes:"
+  ],
+  "topics": [
+    {
+      "prompt": "how do I balance ambition with peace of mind",
+      "core": "Enjoy the craft of the daily process itself while holding your long-term vision lightly, so progress feels rewarding in the present moment."
+    },
+    {
+      "prompt": "why does teaching someone else sharpen your own understanding",
+      "core": "Explaining an idea aloud exposes fuzzy gaps in your mental model and forces you to organize scattered facts into a coherent narrative."
+    },
+    {
+      "prompt": "how can I overcome creative perfectionism",
+      "core": "Give yourself permission to draft a playful version zero first, knowing that momentum is much easier to steer than a blank page."
+    },
+    {
+      "prompt": "what makes curiosity such a powerful superpower",
+      "core": "Curiosity transforms uncertainty from something stressful into an open puzzle you get to explore and learn from."
+    }
+  ],
+  "closers": [
+    "Which part of that resonates with what you are working on today?",
+    "Let me know if you want to explore a practical example together!",
+    "What step feels most natural to try first?"
+  ]
+}

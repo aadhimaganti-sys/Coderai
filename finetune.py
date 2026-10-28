@@ -1,26 +1,30 @@
 #!/usr/bin/env python3
 """
-Global Anti-Memorization Fine-Tuner (`finetune.py`)
-Fine-tunes all Matrix and Delphi AI models across Generation 1.0 and Generation 1.1:
+Global Anti-Memorization & Anti-Repetition Fine-Tuner (`finetune.py`)
+Fine-tunes all Matrix and Delphi AI models across Generation 1.0, 1.1, and 2.0:
   - matrix-1.0-flash, matrix-1.0-pro
   - delphi-1.0-flash, delphi-1.0-pro
   - matrix-1.1-flash, matrix-1.1-pro
   - delphi-1.1-flash, delphi-1.1-pro
+  - matrix-2.0-flash, matrix-2.0-pro (10 Hidden Layers, 1M+ Parameters)
+  - delphi-2.0-flash, delphi-2.0-pro (10 Hidden Layers, 1M+ Parameters)
 
-How it guarantees models do NOT copy verbatim from their training files:
+How it guarantees models do NOT repeat or copy verbatim from their training files:
 1. Cross-File Clause & Code Recombination: Mixes prompts, explanations, clauses, and
    code snippets across different training files so every fine-tuning epoch sees fresh
    synthetic combinations.
 2. Embedding-Space Gaussian Jitter & Token Mixup: Adds continuous Gaussian noise to
    token embeddings during fine-tuning so the Transformer cannot memorize sharp
    lookup tables.
-3. Over-Confidence Suppression + Entropy Regularization: Penalizes any token prediction
-   whose probability on the exact training continuation exceeds `max_token_prob` (e.g. 0.68)
-   and rewards predictive entropy, keeping alternative phrasing probabilities alive.
-4. Training N-Gram Copy Blocker: Extracts an N-gram index from all raw training files and
-   stores it in the checkpoint (`forbidden_ngrams`). During generation, any token that would
-   complete a verbatim N-gram from the training files is heavily penalized so the model must
-   paraphrase and compose original sentences.
+3. Over-Confidence Suppression + Entropy Regularization + Temporal Unlikelihood Loss:
+   Penalizes any token prediction whose probability on the exact training continuation
+   exceeds `max_token_prob` (e.g. 0.65), rewards predictive entropy, and penalizes
+   consecutive token repetition via unlikelihood training.
+4. Multi-Order Training N-Gram Copy Blocker (3-gram & 4-gram) + Self-Repetition Blocker:
+   Extracts N-gram indices from all raw training files and stores them in the checkpoint
+   (`forbidden_ngrams`, `forbidden_trigrams`). During generation, any token that would
+   complete a verbatim N-gram from the training files is heavily penalized so the model
+   must paraphrase and compose original sentences.
 """
 
 import argparse
@@ -102,6 +106,86 @@ MODEL_SPECS: Dict[str, Dict[str, Any]] = {
         "script": ROOT_DIR / "delphi" / "1.1" / "pro" / "model.py",
         "domain": "chat",
         "test_prompt": "how do feedback loops connect information theory and human wisdom",
+    },
+    "matrix-2.0-flash": {
+        "name": "Matrix 2.0 Flash",
+        "gen": "2.0",
+        "dir": ROOT_DIR / "matrix" / "2.0" / "flash",
+        "script": ROOT_DIR / "matrix" / "2.0" / "flash" / "model.py",
+        "domain": "code",
+        "test_prompt": "write a python decorator for exponential backoff retry and merge intervals",
+    },
+    "matrix-2.0-pro": {
+        "name": "Matrix 2.0 Pro",
+        "gen": "2.0",
+        "dir": ROOT_DIR / "matrix" / "2.0" / "pro",
+        "script": ROOT_DIR / "matrix" / "2.0" / "pro" / "model.py",
+        "domain": "code",
+        "test_prompt": "implement grouped query attention with a transactional key value cache in python",
+    },
+    "delphi-2.0-flash": {
+        "name": "Delphi 2.0 Flash",
+        "gen": "2.0",
+        "dir": ROOT_DIR / "delphi" / "2.0" / "flash",
+        "script": ROOT_DIR / "delphi" / "2.0" / "flash" / "model.py",
+        "domain": "chat",
+        "test_prompt": "how can I build deep focus and turn creative sparks into finished work",
+    },
+    "delphi-2.0-pro": {
+        "name": "Delphi 2.0 Pro",
+        "gen": "2.0",
+        "dir": ROOT_DIR / "delphi" / "2.0" / "pro",
+        "script": ROOT_DIR / "delphi" / "2.0" / "pro" / "model.py",
+        "domain": "chat",
+        "test_prompt": "how do symmetry principles and causal reasoning connect physics to human wisdom",
+    },
+    "matrix-2.1-flash": {
+        "name": "Matrix 2.1 Flash MoE",
+        "gen": "2.1",
+        "dir": ROOT_DIR / "matrix" / "2.1" / "flash",
+        "script": ROOT_DIR / "matrix" / "2.1" / "flash" / "model.py",
+        "domain": "code",
+        "test_prompt": "write a fast top-2 sparse MoE router function in pytorch",
+    },
+    "matrix-2.1-pro": {
+        "name": "Matrix 2.1 Pro MoE",
+        "gen": "2.1",
+        "dir": ROOT_DIR / "matrix" / "2.1" / "pro",
+        "script": ROOT_DIR / "matrix" / "2.1" / "pro" / "model.py",
+        "domain": "code",
+        "test_prompt": "implement a DeepSeek-style fine-grained shared plus routed sparse mixture of experts MoE layer with router z-loss in pytorch",
+    },
+    "matrix-2.1-moe": {
+        "name": "Matrix 2.1 MoE",
+        "gen": "2.1",
+        "dir": ROOT_DIR / "matrix" / "2.1" / "moe",
+        "script": ROOT_DIR / "matrix" / "2.1" / "moe" / "model.py",
+        "domain": "code",
+        "test_prompt": "implement a DeepSeek-style fine-grained shared plus routed sparse mixture of experts MoE layer with router z-loss in pytorch",
+    },
+    "delphi-2.1-flash": {
+        "name": "Delphi 2.1 Flash MoE",
+        "gen": "2.1",
+        "dir": ROOT_DIR / "delphi" / "2.1" / "flash",
+        "script": ROOT_DIR / "delphi" / "2.1" / "flash" / "model.py",
+        "domain": "chat",
+        "test_prompt": "how can switching between different mental modes help me solve creative problems",
+    },
+    "delphi-2.1-pro": {
+        "name": "Delphi 2.1 Pro MoE",
+        "gen": "2.1",
+        "dir": ROOT_DIR / "delphi" / "2.1" / "pro",
+        "script": ROOT_DIR / "delphi" / "2.1" / "pro" / "model.py",
+        "domain": "chat",
+        "test_prompt": "how does a mixture of experts mind mirror the way human intuition and reasoning collaborate",
+    },
+    "delphi-2.1-moe": {
+        "name": "Delphi 2.1 MoE",
+        "gen": "2.1",
+        "dir": ROOT_DIR / "delphi" / "2.1" / "moe",
+        "script": ROOT_DIR / "delphi" / "2.1" / "moe" / "model.py",
+        "domain": "chat",
+        "test_prompt": "how does a mixture of experts mind mirror the way human intuition and reasoning collaborate",
     },
 }
 
@@ -256,7 +340,7 @@ def anti_memorization_loss(
     pad_id: int,
     label_smoothing: float = 0.15,
     entropy_weight: float = 0.06,
-    max_token_prob: float = 0.68,
+    max_token_prob: float = 0.65,
 ) -> torch.Tensor:
     vocab_size = logits.size(-1)
     flat_logits = logits.view(-1, vocab_size)
@@ -284,7 +368,17 @@ def anti_memorization_loss(
     overconfident_excess = F.relu(target_probs - max_token_prob)
     confidence_penalty = (overconfident_excess ** 2).mean() * 2.5
 
-    return ce_loss - (entropy_weight * entropy) + confidence_penalty
+    b, t, _ = logits.size()
+    if t > 1:
+        seq_probs = F.softmax(logits[:, 1:, :], dim=-1)
+        prev_tokens = targets[:, :-1].unsqueeze(-1)
+        repeat_probs = seq_probs.gather(-1, prev_tokens).squeeze(-1)
+        non_pad = (targets[:, 1:] != pad_id).float()
+        unlikelihood = (-torch.log(torch.clamp(1.0 - repeat_probs, min=1e-4)) * non_pad).sum() / (non_pad.sum() + 1e-6)
+    else:
+        unlikelihood = torch.tensor(0.0, device=logits.device)
+
+    return ce_loss - (entropy_weight * entropy) + confidence_penalty + 0.08 * unlikelihood
 
 
 def forward_with_embedding_noise(
@@ -315,17 +409,19 @@ def generate_non_copying(
     ngram_index: Dict[Tuple[int, ...], Set[int]],
     ngram_n: int = 4,
     max_new_tokens: int = 90,
-    temperature: float = 0.9,
+    temperature: float = 0.88,
     top_k: int = 28,
     top_p: float = 0.92,
-    repetition_penalty: float = 1.24,
-    copy_penalty: float = 6.0,
+    repetition_penalty: float = 1.25,
+    copy_penalty: float = 6.5,
     device: str = "cpu",
 ) -> str:
     model.eval()
     formatted = f"<|bos|> <|user|> {prompt.strip()} \n <|assistant|>"
     prompt_ids = tokenizer.encode(formatted, add_special=False)
     generated = list(map(int, prompt_ids))
+    prompt_len = len(generated)
+    generated_trigrams: Set[Tuple[int, int, int]] = set()
 
     for _ in range(max_new_tokens):
         ctx = generated[-model.max_seq_len :]
@@ -343,7 +439,13 @@ def generate_non_copying(
                     if 0 <= tok_id < len(logits):
                         logits[tok_id] -= copy_penalty
 
-        for seen_id in set(generated[-36:]):
+        if len(generated) - prompt_len >= 2:
+            last_two = (generated[-2], generated[-1])
+            for cand in range(len(logits)):
+                if (last_two[0], last_two[1], cand) in generated_trigrams:
+                    logits[cand] -= 1e4
+
+        for seen_id in set(generated[-38:]):
             if logits[seen_id] > 0:
                 logits[seen_id] /= repetition_penalty
             else:
@@ -375,9 +477,11 @@ def generate_non_copying(
         next_id = int(np.random.choice(len(probs), p=probs))
         if next_id == tokenizer.eos_id:
             break
+        if len(generated) - prompt_len >= 2:
+            generated_trigrams.add((generated[-2], generated[-1], next_id))
         generated.append(next_id)
 
-    reply_ids = generated[len(prompt_ids) :]
+    reply_ids = generated[prompt_len:]
     return tokenizer.decode(reply_ids)
 
 
@@ -411,7 +515,7 @@ def finetune_single_model(
     epochs: int = 20,
     lr: float = 1.2e-3,
     entropy_weight: float = 0.06,
-    max_token_prob: float = 0.68,
+    max_token_prob: float = 0.65,
     no_copy_ngram: int = 4,
     extra_data_dir: Path | None = None,
 ) -> None:
@@ -466,6 +570,7 @@ def finetune_single_model(
         model = new_model
 
     ngram_index = build_training_ngram_index(raw_samples, tokenizer, n=no_copy_ngram)
+    trigram_index = build_training_ngram_index(raw_samples, tokenizer, n=3)
 
     dataset = AntiMemorizationDataset(
         recombined_samples,
@@ -478,9 +583,12 @@ def finetune_single_model(
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.03)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
 
+    param_count = sum(p.numel() for p in model.parameters())
+    num_layers = len(model.blocks) if hasattr(model, "blocks") else 0
+
     print(
-        f"[{name}] Fine-tuning on {len(recombined_samples)} cross-recombined samples "
-        f"(max_token_prob={max_token_prob}, entropy_weight={entropy_weight}, {no_copy_ngram}-gram copy blocker)..."
+        f"[{name}] ({num_layers} layers, {param_count:,} params) Fine-tuning on {len(recombined_samples)} "
+        f"cross-recombined samples (max_token_prob={max_token_prob}, entropy_weight={entropy_weight}, {no_copy_ngram}-gram copy blocker)..."
     )
 
     model.train()
@@ -498,6 +606,8 @@ def finetune_single_model(
                 entropy_weight=entropy_weight,
                 max_token_prob=max_token_prob,
             )
+            if hasattr(model, "get_moe_auxiliary_loss"):
+                loss = loss + 0.02 * model.get_moe_auxiliary_loss()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
@@ -513,7 +623,9 @@ def finetune_single_model(
     ckpt["anti_copy"] = {
         "ngram_n": no_copy_ngram,
         "forbidden_ngrams": serialize_ngram_index(ngram_index),
+        "forbidden_trigrams": serialize_ngram_index(trigram_index),
     }
+    mod.CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
     torch.save(ckpt, mod.CHECKPOINT_PATH)
     print(f"[{name}] Saved fine-tuned checkpoint + {len(ngram_index)} anti-copy {no_copy_ngram}-gram rules to {mod.CHECKPOINT_PATH}")
 
@@ -533,11 +645,11 @@ def finetune_single_model(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Global Anti-Memorization Fine-Tuner for Matrix and Delphi (Gen 1.0 and Gen 1.1)"
+        description="Global Anti-Memorization Fine-Tuner for Matrix and Delphi (Gen 1.0, 1.1, 2.0, and 2.1 MoE)"
     )
     parser.add_argument(
         "--gen",
-        choices=["all", "1.0", "1.1"],
+        choices=["all", "1.0", "1.1", "2.0", "2.1"],
         default="all",
         help="Filter models by generation (default: all)",
     )
@@ -550,7 +662,7 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=20, help="Fine-tuning epochs per model")
     parser.add_argument("--lr", type=float, default=1.2e-3, help="Fine-tuning learning rate")
     parser.add_argument("--entropy-weight", type=float, default=0.06, help="Entropy regularization weight")
-    parser.add_argument("--max-token-prob", type=float, default=0.68, help="Confidence cap on training tokens")
+    parser.add_argument("--max-token-prob", type=float, default=0.65, help="Confidence cap on training tokens")
     parser.add_argument("--no-copy-ngram", type=int, default=4, help="N-gram length blocked from verbatim copying")
     parser.add_argument("--extra-data", type=str, default=None, help="Optional extra .txt directory")
     args = parser.parse_args()
